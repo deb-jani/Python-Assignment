@@ -1,0 +1,40 @@
+import requests
+from bs4 import BeautifulSoup
+import time
+
+base_url = 'https://www.amazon.in/s?k=bags&crid=2M096C61O4MLT&qid=1653308124&sprefix=ba%2Caps%2C283&ref=sr_pg_'
+
+num_pages = 20
+
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+
+products = []
+
+for i in range(1, num_pages+1):
+    url = base_url + str(i)
+    response = requests.get(url, headers=headers)
+
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    product_listings = soup.find_all('div', {'class': 's-result-item'})
+
+    for product in product_listings:
+        product_url = product.find('a', {'class': 'a-link-normal s-no-outline'})['href']
+        product_name = product.find('span', {'class': 'a-size-base-plus a-color-base a-text-normal'}).text.strip()
+        product_price = product.find('span', {'class': 'a-price-whole'}).text.strip()
+        
+        if product.find('span', {'class': 'a-icon-alt'}):
+            product_rating = product.find('span', {'class': 'a-icon-alt'}).text.split()[0]
+        else:
+            product_rating = ''
+        
+        if product.find('span', {'class': 'a-size-base', 'dir': 'auto'}):
+            product_reviews = product.find('span', {'class': 'a-size-base', 'dir': 'auto'}).text.strip().split()[0]
+        else:
+            product_reviews = ''
+
+        products.append({'url': product_url, 'name': product_name, 'price': product_price, 'rating': product_rating, 'reviews': product_reviews})
+
+    time.sleep(5)
+
+print(products)
